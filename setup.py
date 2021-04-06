@@ -55,7 +55,7 @@ setuptools.setup(
     # },
 
     name = "grovepi",
-    version = "1.4.1",
+    version = "1.4.2",
 
     description = "Fake drivers for using the GrovePi+ in Python",
     long_description = description,
