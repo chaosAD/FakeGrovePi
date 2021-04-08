@@ -43,10 +43,6 @@ except IOError:
 
 # To install the GrovePi library systemwide, use: sudo python setup.py install
 import setuptools
-import os
-import sys
-import shutil
-
 
 setuptools.setup(
 	# cmdclass={
@@ -55,7 +51,7 @@ setuptools.setup(
     # },
 
     name = "grovepi",
-    version = "1.4.3",
+    version = "1.4.4",
 
     description = "Fake drivers for using the GrovePi+ in Python",
     long_description = description,
@@ -79,6 +75,9 @@ setuptools.setup(
 
     keywords = ['robot', 'grovepi', 'grovepi+', 'dexter industries', 'learning', 'education', 'iot', 'internet of things', 'prototyping'],
     py_modules = ['grovepi', 'grove_rgb_lcd', 'FakeDevices'],
+    install_requires = [
+      'mfrc522 @ https://github.com/chaosAD/FakeMFRC552/archive/refs/heads/master.zip'
+    ],
     packages=setuptools.find_packages(),
     python_requires=">=3.6",    
 ) 
