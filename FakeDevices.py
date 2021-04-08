@@ -97,7 +97,7 @@ class Gui(threading.Thread):
         self.root.mainloop()
 
     def dcall(self, func):
-        self.get_msg_queue().put(func)
+        self.msg_queue.put(func)
 
     def quit(self):
         def shutdown(tk_root):

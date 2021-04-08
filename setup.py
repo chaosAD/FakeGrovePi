@@ -55,7 +55,7 @@ setuptools.setup(
     # },
 
     name = "grovepi",
-    version = "1.4.2",
+    version = "1.4.3",
 
     description = "Fake drivers for using the GrovePi+ in Python",
     long_description = description,
@@ -78,7 +78,7 @@ setuptools.setup(
     url = "https://github.com/chaosAD/FakeGrovePi",
 
     keywords = ['robot', 'grovepi', 'grovepi+', 'dexter industries', 'learning', 'education', 'iot', 'internet of things', 'prototyping'],
-    py_modules = ['grovepi', 'grove_rgb_lcd'],
+    py_modules = ['grovepi', 'grove_rgb_lcd', 'FakeDevices'],
     packages=setuptools.find_packages(),
     python_requires=">=3.6",    
 ) 
