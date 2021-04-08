@@ -76,7 +76,8 @@ setuptools.setup(
     keywords = ['robot', 'grovepi', 'grovepi+', 'dexter industries', 'learning', 'education', 'iot', 'internet of things', 'prototyping'],
     py_modules = ['grovepi', 'grove_rgb_lcd', 'FakeDevices'],
     install_requires = [
-      'mfrc522 @ https://github.com/chaosAD/FakeMFRC552/archive/refs/heads/master.zip'
+      'mfrc522 @ https://github.com/chaosAD/FakeMFRC552/archive/refs/heads/master.zip',
+      'pytk >= 0.0.2.1'
     ],
     packages=setuptools.find_packages(),
     python_requires=">=3.6",    
