@@ -260,8 +260,8 @@ class MifareRfid():
 
     def start(self, gui):
         storage = CardStorage(self.filename)
+        SimpleMFRC522.set_writer(storage)
         rfids = storage.read()
-
         class TagEventListener():
             def __init__(self):
                 self.card_num = None
