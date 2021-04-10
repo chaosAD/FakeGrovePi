@@ -83,5 +83,5 @@ def ultrasonicRead(pin):
     return devices[name].get_value()
 
 def version():
-    return "%s.%s.%s" % (1, 4, 4)
+    return "%s.%s.%s" % (1, 4, 6)
 

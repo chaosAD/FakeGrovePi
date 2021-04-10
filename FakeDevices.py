@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font as tkFont
-import threading
+import threading, time
 from queue import Queue
 from queue import Empty
 
+import beeper
 from grovepi import *
 from mfrc522 import *
 
@@ -35,17 +36,19 @@ class GuiButton:
         gui.dcall(create_button)
 
 class GuiCheckbutton:
-    def __init__(self, gui, name, callback):
+    def __init__(self, gui, name, listener):
         self.widget = None
         def create_checkbutton(tk_root):
-            self.var = tk.StringVar()
+            var = tk.BooleanVar()
+            var.set(False)
             s = ttk.Style()
-            s.configure('Dx.TCheckbutton', font=('Lucida Grande', 12))
+            s.configure('S.TCheckbutton', font=('Lucida Grande', 13))
             widget = ttk.Checkbutton(tk_root, text=name,
-                                     variable=self.var,
-                                     onvalue='yes', offvalue='no',
-                                     style='Dx.TCheckbutton',
-                                     command=callback)
+                                     variable=var,
+                                     onvalue=True, offvalue=False,
+                                     style='S.TCheckbutton',
+                                     command=listener.on_event)
+            listener.set_variables(widget, var)
             widget.pack(anchor='w', expand=1)
             self.widget = widget
         self.gui = gui
@@ -76,6 +79,8 @@ class GuiMifareRfid:
                                       background='Green')
             button = tk.Button(tk_root, text=name,
                                font=('Lucida Grande', 14, 'normal'))
+            # http://epydoc.sourceforge.net/stdlib/Tkinter.Event-class.html
+            # https://subscription.packtpub.com/book/web_development/9781788622301/1/ch01lvl1sec20/handling-mouse-and-keyboard-events
             button.bind("<ButtonPress>", listener.on_touch)
             button.bind("<ButtonRelease>", listener.on_remove)
             listener.set_variables(card_num_entry, num_var)
@@ -135,41 +140,65 @@ class Gui(threading.Thread):
 ###########################################################
 
 class DigitalPin:
-    def __init__(self, pin, name=None, verbose=True):
-        self.state = 0
+    __num_of_sounder = 0
+
+    def __init__(self, pin, name=None, should_sound=False, verbose=True):
+        self.name = name
         self.verbose = verbose
+        self.var = None
+        self.should_sound = should_sound
+        self.prev_state = False
         self.name = f'Digital Pin {pin}' if name is None else name
         assert_digital_pin(pin)
         if digital_pins[pin]:
             raise Exception(f'Digital pin {pin} already exists')
         digital_pins[pin] = 1
         devices[f'D{pin}'] = self
-        self.checkbutton = None
 
     def start(self, gui):
-        def checkbutton_callback():
-            with thread_lock:
-                self.state ^= 1
-        self.gui = gui
-        self.checkbutton = GuiCheckbutton(gui, self.name, checkbutton_callback)
+        buzzer_self = self
+        class BuzzerEventListener:
+            def __init__(self):
+                self.checkbox = None
+                self.var = None
+            def on_event(self):
+                buzzer_self.handle_noise()
+            def set_variables(self, checkbutton, var):
+                self.checkbox = checkbutton
+                self.var = var
+                buzzer_self.var = var
+        # https://stackoverflow.com/questions/270648/tkinter-invoke-event-in-main-loop
+        self.checkbutton = GuiCheckbutton(gui, self.name, BuzzerEventListener())
+
+    def set_value(self, value):
+        while not self.var:
+            # Wait till self.var is set by the caller of set_variables(.)
+            time.sleep(0.05)
+        self.var.set(value)
+        self.handle_noise()
 
     def get_value(self):
-        with thread_lock:
-            return self.state
+        while not self.var:
+            # Wait till self.var is set by the caller of set_variables(.)
+            time.sleep(0.05)
+        return int(self.var.get())
 
-    def set_value(self, state):
-        if state == 0:
-            new_state = '!selected'
-        else:
-            new_state = 'selected'
-        def set_to_value(tk_root):
+    def handle_noise(self):
+        if self.should_sound:
             with thread_lock:
-                self.checkbutton.widget.state([new_state])
-                if new_state[0] == '!':
-                    self.state = 0
+                current_state = self.var.get()
+                if current_state == True:
+                    if DigitalPin.__num_of_sounder == 0:
+                        beeper.start_beeping()
+                    if current_state != self.prev_state:
+                        DigitalPin.__num_of_sounder += 1
+                        self.prev_state = current_state
                 else:
-                    self.state = 1
-        self.gui.dcall(set_to_value)
+                    if current_state != self.prev_state:
+                        DigitalPin.__num_of_sounder -= 1
+                        self.prev_state = current_state
+                    if DigitalPin.__num_of_sounder == 0:
+                        beeper.stop_beeping()
 
 class AnalogReadPin:
     def __init__(self, pin, name=None, min=0, max=1023):
