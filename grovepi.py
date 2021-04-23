@@ -1,13 +1,13 @@
-import threading, math
+import threading, math, sys
 #from FakeDevices import *
 
-MAX_DIGITAL_PIN = 9
-MAX_ANALOG_WRITE_PIN = 9
-MAX_ANALOG_READ_PIN = 2
+MAX_DIGITAL_PIN = 1000                #9
+MAX_ANALOG_WRITE_PIN = 1000           #9
+MAX_ANALOG_READ_PIN = 1000            #2
 
 thread_lock = threading.Lock()
-digital_pins = [0,0,0,0,0,0,0,0,0,0]
-analog_pins  = [0,0,0]
+digital_pins = [0] * MAX_DIGITAL_PIN
+analog_pins  = [0] * MAX_ANALOG_READ_PIN
 devices = {}
 
 def assert_analog_write_pin(pin):
@@ -83,5 +83,5 @@ def ultrasonicRead(pin):
     return devices[name].get_value()
 
 def version():
-    return "%s.%s.%s" % (1, 4, 6)
+    return "%s.%s.%s" % (1, 4, 7)
 

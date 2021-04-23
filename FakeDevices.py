@@ -42,11 +42,11 @@ class GuiCheckbutton:
             var = tk.BooleanVar()
             var.set(False)
             s = ttk.Style()
-            s.configure('S.TCheckbutton', font=('Lucida Grande', 13))
+            s.configure('DPin.TCheckbutton', font=('Lucida Grande', 13))
             widget = ttk.Checkbutton(tk_root, text=name,
                                      variable=var,
                                      onvalue=True, offvalue=False,
-                                     style='S.TCheckbutton',
+                                     style='DPin.TCheckbutton',
                                      command=listener.on_event)
             listener.set_variables(widget, var)
             widget.pack(anchor='w', expand=1)
