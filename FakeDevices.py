@@ -171,18 +171,20 @@ class DigitalPin:
                 buzzer_self.var = var
         # https://stackoverflow.com/questions/270648/tkinter-invoke-event-in-main-loop
         self.checkbutton = GuiCheckbutton(gui, self.name, BuzzerEventListener(), self.initial)
+        self.set_value(self.initial)
 
-    def set_value(self, value):
+    def wait_till_var_initialized(self):
         while not self.var:
             # Wait till self.var is set by the caller of set_variables(.)
             time.sleep(0.05)
+
+    def set_value(self, value):
+        self.wait_till_var_initialized()
         self.var.set(value)
         self.handle_noise()
 
     def get_value(self):
-        while not self.var:
-            # Wait till self.var is set by the caller of set_variables(.)
-            time.sleep(0.05)
+        self.wait_till_var_initialized()
         return int(self.var.get())
 
     def handle_noise(self):
