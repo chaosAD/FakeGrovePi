@@ -36,11 +36,11 @@ class GuiButton:
         gui.dcall(create_button)
 
 class GuiCheckbutton:
-    def __init__(self, gui, name, listener):
+    def __init__(self, gui, name, listener, initial=False):
         self.widget = None
         def create_checkbutton(tk_root):
             var = tk.BooleanVar()
-            var.set(False)
+            var.set(initial)
             s = ttk.Style()
             s.configure('DPin.TCheckbutton', font=('Lucida Grande', 13))
             widget = ttk.Checkbutton(tk_root, text=name,
@@ -56,7 +56,8 @@ class GuiCheckbutton:
         gui.dcall(create_checkbutton)
 
 class GuiSlider:
-    def __init__(self, gui, name, min, max, callback):
+    def __init__(self, gui, name, min, max, callback, initial=None):
+        initial = min if initial is None else initial
         def create_slider(tk_root):
             fontStyle = tkFont.Font(tk_root, family="Lucida Grande", size=14)
             slider = tk.Scale(tk_root, from_=min, to=max,
@@ -64,7 +65,7 @@ class GuiSlider:
                                 font=fontStyle,
                                 label=name,
                                 command=callback)
-            slider.set(min)
+            slider.set(initial)
             slider.pack(fill='x', expand=1)
         GuiSeparator(gui)
         gui.dcall(create_slider)
@@ -142,8 +143,9 @@ class Gui(threading.Thread):
 class DigitalPin:
     __num_of_sounder = 0
 
-    def __init__(self, pin, name=None, should_sound=False, verbose=True):
+    def __init__(self, pin, name=None, initial=False, should_sound=False, verbose=True):
         self.name = name
+        self.initial = initial
         self.verbose = verbose
         self.var = None
         self.should_sound = should_sound
@@ -168,7 +170,7 @@ class DigitalPin:
                 self.var = var
                 buzzer_self.var = var
         # https://stackoverflow.com/questions/270648/tkinter-invoke-event-in-main-loop
-        self.checkbutton = GuiCheckbutton(gui, self.name, BuzzerEventListener())
+        self.checkbutton = GuiCheckbutton(gui, self.name, BuzzerEventListener(), self.initial)
 
     def set_value(self, value):
         while not self.var:
@@ -201,10 +203,12 @@ class DigitalPin:
                         beeper.stop_beeping()
 
 class AnalogReadPin:
-    def __init__(self, pin, name=None, min=0, max=1023):
+    def __init__(self, pin, name=None, min=0, max=1023, initial=None):
         self.value = min
         self.min = min
         self.max = max
+        self.initial = min if initial is None else initial
+        print(f'initial {initial}')
         self.name = f'Analog Read Pin {pin}' if name is None else name
         assert_analog_read_pin(pin)
         if analog_pins[pin]:
@@ -212,20 +216,19 @@ class AnalogReadPin:
         analog_pins[pin] = 1
         devices[f'A{pin}'] = self
 
-
     def start(self, gui):
         def slider_callback(value):
             with thread_lock:
                 self.value = int(value)
-        self.checkbutton = GuiSlider(gui, self.name, self.min, self.max, slider_callback)
+        self.checkbutton = GuiSlider(gui, self.name, self.min, self.max, slider_callback, self.initial)
 
     def get_value(self):
         with thread_lock:
             return self.value
 
 class Ultrasonic:
-    def __init__(self, pin, name=None):
-        self.value = 0
+    def __init__(self, pin, name=None, initial=0):
+        self.value = initial
         self.pin = pin
         self.name = f'Ultrasonic Ranger (D{pin})' if name is None else name
         assert_digital_pin(pin)
@@ -241,15 +244,16 @@ class Ultrasonic:
         def slider_callback(value):
             with thread_lock:
                 self.value = int(value)
-        self.checkbutton = GuiSlider(gui, self.name, 0, 500, slider_callback)
+        self.checkbutton = GuiSlider(gui, self.name, 0, 500, slider_callback, self.value)
 
     def get_value(self):
         with thread_lock:
             return self.value
 
 class DHT:
-    def __init__(self, pin, name=None):
-        self.temp_value = self.humidity_value = 0
+    def __init__(self, pin, name=None, initial_temp=0, initial_humidity=0):
+        self.temp_value = initial_temp
+        self.humidity_value = initial_humidity
         self.pin = pin
         self.name = f'DHT (D{pin})' if name is None else name
         assert_digital_pin(pin)
@@ -269,9 +273,9 @@ class DHT:
             with thread_lock:
                 self.humidity_value = int(value)
         self.temp = GuiSlider(gui, self.name + ' temperature \xb0C', 0, 110,
-                              temp_callback)
+                              temp_callback, self.temp_value)
         self.temp = GuiSlider(gui, self.name + ' humidity %', 0, 100,
-                              humidity_callback)
+                              humidity_callback, self.humidity_value)
 
     def get_temp_value(self):
         with thread_lock:
